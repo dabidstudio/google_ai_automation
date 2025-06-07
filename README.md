@@ -1,10 +1,12 @@
 # 챗GPT와 구글서비스로 만드는 AI 자동화 10선
 
-https://dabidstudio.github.io/google_ai_automation/
+[![image](https://github.com/user-attachments/assets/90abc6c7-0556-4993-84db-1f6b7fc15960)](https://dabidstudio.github.io/google_ai_automation/)
 
-![image](https://github.com/user-attachments/assets/90abc6c7-0556-4993-84db-1f6b7fc15960)
+---
 
+## 🔗 AI 자동화 프로젝트 목록
 
+<div align="center">
 
 | 순번 | 항목명                        | 최종 공유용 링크                                                                                     | GitHub Guide |
 |------|-------------------------------|--------------------------------------------------------------------------------------------------------|--------------|
@@ -18,3 +20,5 @@ https://dabidstudio.github.io/google_ai_automation/
 | 8    | 🌐 웹페이지 -> PPT 자동화      | [시도1](https://chatgpt.com/share/68444e3b-6214-8006-84e7-d1ca3dbc3713) / [시도2](https://chatgpt.com/share/68444e71-1640-8006-8b29-94ed02ef10b1) | [08_웹페이지_PPT_자동화.md](https://github.com/dabidstudio/google_ai_automation/blob/main/guides/08_%EC%9B%B9%ED%8E%98%EC%9D%B4%EC%A7%80_PPT_%EC%9E%90%EB%8F%99%ED%99%94.md) |
 | 9    | 🧠 아이디어 정리 에이전트      | [링크](https://chatgpt.com/share/684454bb-a78c-8006-93a7-a2d853c41e47)                               | [09_아이디어정리_에이전트.md](https://github.com/dabidstudio/google_ai_automation/blob/main/guides/09_%EC%95%84%EC%9D%B4%EB%94%94%EC%96%B4%EC%A0%95%EB%A6%AC_%EC%97%90%EC%9D%B4%EC%A0%84%ED%8A%B8.md) |
 | 10   | 🧠 유튜브 종합 에이전트        | [링크](https://chatgpt.com/share/68445774-c7cc-8006-824b-6c23ed9af998)                               | [10_유튜브_에이전트.md](https://github.com/dabidstudio/google_ai_automation/blob/main/guides/10_%EC%9C%A0%ED%8A%9C%EB%B8%8C_%EC%97%90%EC%9D%B4%EC%A0%84%ED%8A%B8.md) |
+
+</div>
