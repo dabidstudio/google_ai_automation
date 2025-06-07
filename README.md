@@ -1,4 +1,5 @@
 # 챗GPT와 구글서비스로 만드는 AI 자동화 10선
+> 👉 아래 이미지를 클릭하면 전체 AI 자동화 프로젝트 페이지로 이동합니다!
 
 [![image](https://github.com/user-attachments/assets/90abc6c7-0556-4993-84db-1f6b7fc15960)](https://dabidstudio.github.io/google_ai_automation/)
 
