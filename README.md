@@ -8,7 +8,7 @@
 
 <div align="center">
 
-| 순번 | 항목명                        | 최종 공유용 링크                                                                                     | GitHub Guide |
+| 순번 | 항목명                        | 챗GPT 링크                                                                                     | GitHub Guide |
 |------|-------------------------------|--------------------------------------------------------------------------------------------------------|--------------|
 | 1    | 🧩 AI 함수 만들기              | [링크](https://chatgpt.com/share/684432d2-5748-8006-a43d-be9ee236bbf7)                               | [01_AI함수.md](https://github.com/dabidstudio/google_ai_automation/blob/main/guides/01_AI%ED%95%A8%EC%88%98.md) |
 | 2    | 📅 오늘 일정 요약 자동화       | [링크](https://chatgpt.com/share/684432e7-0630-8006-8ac5-edbdd87d3e19)                               | [02_일정요약_자동화.md](https://github.com/dabidstudio/google_ai_automation/blob/main/guides/02_%EC%9D%BC%EC%A0%95%EC%9A%94%EC%95%BD_%EC%9E%90%EB%8F%99%ED%99%94.md) |
