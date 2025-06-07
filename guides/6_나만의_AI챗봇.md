@@ -1,0 +1,164 @@
+# 기억력 있는 텔레그램 챗봇 만들기 (대화 기록 구글시트 저장)
+
+## 프로그램 소개
+
+이 프로그램은 **텔레그램으로 받은 메시지를 OpenAI GPT 모델을 통해 응답하고, 이전 대화 내용을 기억해 대화를 이어가며, 모든 대화 기록을 Google 시트에 자동 저장하는 챗봇**입니다.
+시트를 활용하여 메시지를 보관하고, 과거 대화를 기반으로 GPT가 더 자연스럽게 응답할 수 있습니다.
+
+---
+
+## 실행 방법
+
+### 1. 각종 키 입력
+
+* **TELEGRAM\_TOKEN**: [봇 토큰 발급 가이드](https://github.com/dabidstudio/dabidstudio_guides/blob/main/get_telegram_token.md)를 참고해 발급 후 입력
+* **OPENAI\_API\_KEY**: [OpenAI 키 발급 가이드](https://github.com/dabidstudio/dabidstudio_guides/blob/main/get-openai-api-key.md)를 참고해 발급 후 입력
+
+---
+
+### 2. Google Apps Script 열기
+
+1. [https://script.new](https://script.new) 에 접속해 새 프로젝트 생성
+2. 아래 코드를 붙여넣기
+
+```javascript
+const TELEGRAM_TOKEN = 'YOUR_TELEGRAM_BOT_TOKEN';
+const TELEGRAM_API_URL = 'https://api.telegram.org/bot' + TELEGRAM_TOKEN;
+const OPENAI_API_KEY = 'YOUR_OPENAI_API_KEY';
+const SHEET_NAME = 'TelegramChatLog';
+
+function doPost(e) {
+  const contents = JSON.parse(e.postData.contents);
+  const message = contents.message;
+
+  if (!message || !message.text) return;
+
+  const chatId = message.chat.id;
+  const text = message.text;
+  const userId = message.from.id;
+  const username = message.from.username || 'NoUsername';
+
+  const recentHistory = getRecentMessages(chatId);
+  const reply = getGPTReplyWithContext(text, recentHistory);
+  logMessageToSheet(chatId, username, text, reply);
+  sendMessage(chatId, reply);
+}
+
+function getGPTReplyWithContext(userMessage, historyMessages) {
+  const messages = [
+    { role: 'system', content: '당신은 기억력이 좋은 챗봇입니다. 아래 대화 내역을 참고하여 응답하세요.' },
+    ...historyMessages.map(msg => ({ role: 'user', content: msg })),
+    { role: 'user', content: userMessage }
+  ];
+
+  const payload = {
+    model: 'gpt-4o',
+    messages: messages,
+    temperature: 0.7
+  };
+
+  const options = {
+    method: 'post',
+    contentType: 'application/json',
+    headers: {
+      Authorization: 'Bearer ' + OPENAI_API_KEY
+    },
+    payload: JSON.stringify(payload)
+  };
+
+  try {
+    const response = UrlFetchApp.fetch('https://api.openai.com/v1/chat/completions', options);
+    const data = JSON.parse(response.getContentText());
+    return data.choices[0].message.content.trim();
+  } catch (e) {
+    return 'GPT 응답 중 오류가 발생했습니다.';
+  }
+}
+
+function logMessageToSheet(chatId, username, message, reply) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+  sheet.appendRow([new Date(), chatId, username, message, reply]);
+}
+
+function getRecentMessages(chatId, limit = 5) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+  const data = sheet.getDataRange().getValues();
+
+  const history = [];
+  for (let i = data.length - 1; i >= 1 && history.length < limit; i--) {
+    const row = data[i];
+    if (row[1] == chatId) {
+      history.unshift(`👤 ${row[2]}: ${row[3]}\n🤖 GPT: ${row[4]}`);
+    }
+  }
+  return history;
+}
+
+function sendMessage(chatId, text) {
+  const url = TELEGRAM_API_URL + '/sendMessage';
+  const payload = {
+    chat_id: chatId,
+    text: text
+  };
+  const options = {
+    method: 'post',
+    contentType: 'application/json',
+    payload: JSON.stringify(payload)
+  };
+  UrlFetchApp.fetch(url, options);
+}
+```
+
+---
+
+### 3. Google 시트 준비
+
+* 프로젝트와 연결된 Google 스프레드시트에 `TelegramChatLog` 라는 이름의 시트를 만들어 주세요.
+* 첫 번째 행(헤더)은 없어도 되지만, 다음과 같이 구성하면 가독성이 좋습니다:
+
+  ```
+  날짜, Chat ID, 사용자명, 질문, GPT 응답
+  ```
+
+---
+
+### 4. 앱 배포 (웹훅용)
+
+1. 상단 메뉴 → **"배포 > 웹 앱으로 배포"** 클릭
+2. 설정
+
+   * **설명**: GPT 대화 기록 챗봇
+   * **다음 사용자로 앱 실행**: 본인 계정
+   * **앱에 액세스할 수 있는 사용자**: *익명 사용자(Anyone)*
+3. **"배포 > 새 버전 만들기"** 클릭 → **웹 앱 URL 복사**
+
+**중요: 코드를 수정하면 반드시 "새 버전으로 다시 배포"해야 적용됩니다.**
+
+---
+
+### 5. 텔레그램 웹훅 설정
+
+복사한 웹 앱 URL을 기반으로 다음과 같이 웹훅을 설정합니다.
+
+```
+https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook?url=<웹앱_URL>
+```
+
+**예시**
+만약 텔레그램 봇 토큰이 `123456789:ABCxyz` 이고, 웹 앱 URL이
+`https://script.google.com/macros/s/AKfycbxyz123/exec` 이라면:
+
+```
+https://api.telegram.org/bot123456789:ABCxyz/setWebhook?url=https://script.google.com/macros/s/AKfycbxyz123/exec
+```
+
+설정이 완료되면 챗봇이 정상 작동합니다.
+
+---
+
+## 기타
+
+* GPT 대화에 활용되는 과거 메시지 개수는 기본 5개이며, `getRecentMessages()` 함수의 `limit` 값을 조정하면 변경할 수 있습니다.
+* Google 시트는 스크립트와 동일한 스프레드시트 안에 있어야 하며, 시트 이름은 `SHEET_NAME` 변수에서 변경할 수 있습니다.
+* 봇이 오류 없이 작동하는지 확인하려면, 처음에는 간단한 질문(예: "안녕")으로 테스트해보세요.
+* 추후 다국어 지원, 시간 조건 필터링, 요약 저장 등으로 확장 가능합니다.
