@@ -1,0 +1,140 @@
+# 나만의 일정 요약 자동화
+
+## 프로그램 소개
+
+이 프로그램은 **Google 캘린더의 오늘 일정을 가져와 OpenAI GPT 모델로 요약하고, 그 결과를 Telegram 메시지로 전송하는 Google Apps Script**입니다.
+매일 아침 자동으로 오늘의 일정을 간단하고 친절한 메시지로 받아보고 싶다면 이 스크립트를 활용해보세요.
+
+---
+
+## 실행 방법
+
+### 1. 각종 키 입력
+
+* **TELEGRAM\_TOKEN**: 봇 토큰을 [이 가이드](https://github.com/dabidstudio/dabidstudio_guides/blob/main/get_telegram_token.md)를 따라 발급받고 여기에 붙여넣기
+* **TELEGRAM\_CHAT\_ID**: 아래 "CHAT ID 확인 방법" 참고
+* **OPENAI\_API\_KEY**: [OpenAI 키 발급 가이드](https://github.com/dabidstudio/dabidstudio_guides/blob/main/get-openai-api-key.md)를 참고하여 API 키 발급 후 입력
+
+#### CHAT ID 확인 방법
+
+1. 텔레그램에서 생성한 봇에게 아무 메시지 보내기
+
+2. 아래 주소 접속 (봇 토큰 입력)
+
+   ```
+   https://api.telegram.org/bot<봇_토큰>/getUpdates
+   ```
+
+   예: `https://api.telegram.org/bot123456789:ABCxyz/getUpdates`
+
+3. JSON 응답에서 `"chat": { "id": 숫자 }` 형태를 찾기
+   이 숫자가 **TELEGRAM\_CHAT\_ID**입니다.
+
+---
+
+### 2. Google 캘린더에서 일정 확인 및 샘플 추가
+
+1. [https://calendar.google.com](https://calendar.google.com) 에 접속
+2. 오늘 날짜에 일정이 없다면, 아래와 같이 샘플 일정 추가
+
+   * 제목: 회의
+   * 시간: 오전 10:00 \~ 11:00
+
+   ※ Google 캘린더의 기본 캘린더에 추가해야 정상 작동합니다.
+
+---
+
+### 3. Google Apps Script 열기
+
+1. [https://script.new](https://script.new) 에 접속해 새 프로젝트 생성
+2. 아래 코드를 붙여넣기
+
+```javascript
+const TELEGRAM_TOKEN = '여기에_봇_토큰';
+const TELEGRAM_CHAT_ID = '여기에_Chat_ID';
+const OPENAI_API_KEY = '여기에_OpenAI_API_KEY';
+
+function sendDailySummary() {
+  const events = getTodayCalendarEvents();
+  const plainText = formatEvents(events);
+  const summary = summarizeWithGPT(plainText);
+  sendToTelegram(summary);
+}
+
+function getTodayCalendarEvents() {
+  const calendar = CalendarApp.getDefaultCalendar();
+  const today = new Date();
+  const start = new Date(today.setHours(0, 0, 0, 0));
+  const end = new Date(today.setHours(23, 59, 59, 999));
+  return calendar.getEvents(start, end);
+}
+
+function formatEvents(events) {
+  if (events.length === 0) return '오늘은 일정이 없습니다.';
+  return events.map(e => {
+    return `- ${e.getTitle()} (${formatTime(e.getStartTime())} ~ ${formatTime(e.getEndTime())})`;
+  }).join('\n');
+}
+
+function formatTime(date) {
+  return Utilities.formatDate(date, Session.getScriptTimeZone(), 'HH:mm');
+}
+
+function summarizeWithGPT(content) {
+  const payload = {
+    model: "gpt-4o",
+    messages: [
+      {
+        role: "system",
+        content: "당신은 사용자의 일정 매니저입니다. 사용자의 오늘 일정을 보고, 간단하고 친절하게 하루를 준비할 수 있도록 응원 메시지도 함께 요약해주세요."
+      },
+      {
+        role: "user",
+        content: `오늘의 일정은 다음과 같습니다:\n\n${content}`
+      }
+    ],
+    temperature: 0.7
+  };
+
+  const response = UrlFetchApp.fetch("https://api.openai.com/v1/chat/completions", {
+    method: "post",
+    contentType: "application/json",
+    headers: {
+      Authorization: `Bearer ${OPENAI_API_KEY}`
+    },
+    payload: JSON.stringify(payload)
+  });
+
+  const json = JSON.parse(response.getContentText());
+  return json.choices[0].message.content.trim();
+}
+
+function sendToTelegram(summary) {
+  const today = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy년 M월 d일 (E)');
+  const fullMessage = `📅 *${today} 일정 요약*\n\n${summary}\n\n오늘도 멋진 하루 보내세요!`;
+
+  const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
+  const payload = {
+    chat_id: TELEGRAM_CHAT_ID,
+    text: fullMessage,
+    parse_mode: "Markdown"
+  };
+
+  UrlFetchApp.fetch(url, {
+    method: "post",
+    contentType: "application/json",
+    payload: JSON.stringify(payload)
+  });
+}
+```
+
+---
+
+### 4. 트리거 설정 (선택 사항)
+
+1. 상단 메뉴 → **시계 아이콘(트리거)** 클릭
+2. `sendDailySummary` 함수 선택
+3. 시간 기반 → 매일 아침 원하는 시간 설정
+4. 저장 후 권한 승인 진행
+
+
