@@ -5,6 +5,7 @@
 이 프로그램은 **웹사이트 링크를 보내면 해당 내용을 분석하여 Google 슬라이드 형식의 발표 자료를 자동 생성하는 에이전트입니다**입니다.
 
 ### 데모
+![explorer_Fgye8L1A3Q](https://github.com/user-attachments/assets/05e92ba2-8f2b-41de-8042-8ac345a44065)
 
 ---
 
