@@ -1,9 +1,10 @@
-# 링크를 보내면 슬라이드를 생성해주는 텔레그램 봇 만들기
+# 링크를 보내면 PPT를 생성해주는 에이전트
 
 ## 프로그램 소개
 
-이 프로그램은 **텔레그램으로 웹사이트 링크를 보내면 해당 내용을 분석하여 Google 슬라이드 형식의 발표 자료를 자동 생성하는 Google Apps Script 기반 텔레그램 봇**입니다.
-GPT 모델을 활용해 웹페이지 내용을 요약하고, Google Slides API를 사용하여 테마가 적용된 발표 자료를 자동으로 구성합니다.
+이 프로그램은 **웹사이트 링크를 보내면 해당 내용을 분석하여 Google 슬라이드 형식의 발표 자료를 자동 생성하는 에이전트입니다**입니다.
+
+### 데모
 
 ---
 
@@ -30,6 +31,7 @@ const OPENAI_API_KEY = 'YOUR_OPENAI_API_KEY';
 const TELEGRAM_API_URL = 'https://api.telegram.org/bot' + TELEGRAM_TOKEN;
 const TEMPLATE_SLIDE_ID = 'YOUR_TEMPLATE_SLIDE_ID';  // 슬라이드 템플릿 ID 입력
 
+
 function doPost(e) {
   const contents = JSON.parse(e.postData.contents);
   const message = contents.message;
@@ -50,17 +52,19 @@ function doPost(e) {
   }
 }
 
+// 웹사이트 내용을 가져오기
 function fetchWebsiteText(url) {
   try {
     const response = UrlFetchApp.fetch(url);
     const html = response.getContentText();
     const text = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-    return text.slice(0, 4000); // GPT 입력 제한
+    return text.slice(0, 4000); // 길이 제한
   } catch (error) {
     return '웹사이트 내용을 가져오는 중 오류가 발생했습니다.';
   }
 }
 
+// GPT로 슬라이드 요약 내용 생성
 function generateSlideStructure(text) {
   const prompt = `
 다음 내용을 기반으로 5개의 슬라이드 구성안을 만들어 주세요.
@@ -77,8 +81,8 @@ function generateSlideStructure(text) {
 3. 근거3
 
 내용:
-${text}`;
-
+${text}
+  `;
   const payload = {
     model: 'gpt-4o',
     messages: [
@@ -87,7 +91,6 @@ ${text}`;
     ],
     temperature: 0.7
   };
-
   const options = {
     method: 'post',
     contentType: 'application/json',
@@ -102,16 +105,20 @@ ${text}`;
   return data.choices[0].message.content.trim();
 }
 
+
+// 구글 드라이브에서 템플릿 프레젠테이션을 복사해서 새 프레젠테이션 생성
 function createGoogleSlides(slideText, chatId) {
   try {
+    // 1. 템플릿 복사
     const copiedFile = DriveApp.getFileById(TEMPLATE_SLIDE_ID).makeCopy('자동 생성된 슬라이드');
     const presentation = SlidesApp.openById(copiedFile.getId());
-    sendMessage(chatId, '슬라이드 프레젠테이션을 생성했습니다.');
 
+    // 2. 기존 슬라이드(템플릿에 있던 것) 삭제
     while (presentation.getSlides().length > 0) {
       presentation.getSlides()[0].remove();
     }
 
+    // 3. 슬라이드 내용 추가 (아래는 기존 코드와 동일)
     const slideChunks = slideText.split(/슬라이드\s*\d+:/).filter(s => s.trim() !== '');
     slideChunks.forEach((slide, index) => {
       const titleMatch = slide.match(/제목:\s*(.+)/);
@@ -120,15 +127,14 @@ function createGoogleSlides(slideText, chatId) {
       const title = titleMatch ? titleMatch[1].trim() : '제목 없음';
       const contents = contentMatches ? contentMatches.map(c => c.replace(/^\d\.\s*/, '')) : [];
 
+      // 테마 적용된 프레젠테이션에 슬라이드 추가
       const newSlide = presentation.appendSlide(SlidesApp.PredefinedLayout.TITLE_AND_BODY);
       newSlide.getPlaceholder(SlidesApp.PlaceholderType.TITLE).asShape().getText().setText(title);
       newSlide.getPlaceholder(SlidesApp.PlaceholderType.BODY).asShape().getText().setText(contents.join('\n'));
 
-      sendMessage(chatId, `슬라이드 ${index + 1} 생성 완료`);
     });
 
     const slideUrl = presentation.getUrl();
-    sendMessage(chatId, `슬라이드가 모두 생성되었습니다! 링크: ${slideUrl}`);
     return slideUrl;
 
   } catch (error) {
@@ -137,13 +143,14 @@ function createGoogleSlides(slideText, chatId) {
   }
 }
 
+
+// 텔레그램 메시지 전송
 function sendMessage(chatId, text) {
   const url = TELEGRAM_API_URL + '/sendMessage';
   const payload = {
     chat_id: chatId,
     text: text
   };
-
   const options = {
     method: 'post',
     contentType: 'application/json',
@@ -152,6 +159,7 @@ function sendMessage(chatId, text) {
 
   UrlFetchApp.fetch(url, options);
 }
+
 ```
 
 ---
