@@ -1,19 +1,19 @@
-# PDF 파일을 요약하고 링크로 보내주는 텔레그램 봇 만들기
+# PDF 파일을 요약하고 링크로 보내주는 PDF 관리 에이전트
 
 ## 프로그램 소개
 
-이 프로그램은 **텔레그램에서 PDF 파일을 전송하면, Google Apps Script를 통해 텍스트를 추출하고 GPT로 요약하여, 요약 문서 링크와 원본 PDF 링크를 자동 응답하는 봇**입니다.
+이 프로그램은 **텔레그램에서 PDF 파일을 전송하면, PDF 텍스트를 추출하고 GPT로 요약한 후 구글드라이브에 저장하고 요약 문서 링크와 원본 PDF 링크를 자동 응답하는 에이전트입니다.
 특정 문서 요약, 보고서 전달, 자료 검토 등에 활용할 수 있습니다.
 
 ---
 
 ## 실행 방법
 
-### 1. 각종 키 입력
+### 1. 각종 키 및 PDF 준비
 
 * **TELEGRAM\_TOKEN**: [봇 토큰 발급 가이드](https://github.com/dabidstudio/dabidstudio_guides/blob/main/get_telegram_token.md)를 참고해 발급 후 입력
 * **OPENAI\_API\_KEY**: [OpenAI 키 발급 가이드](https://github.com/dabidstudio/dabidstudio_guides/blob/main/get-openai-api-key.md)를 참고해 발급 후 입력
-
+* 샘플 PDF 파일 : [Wikipedia의 Google Apps Script 문서](https://en.wikipedia.org/w/index.php?title=Special:DownloadAsPdf&page=Google_Apps_Script&action=show-download-screen)
 ---
 
 ### 2. Google Apps Script 열기
