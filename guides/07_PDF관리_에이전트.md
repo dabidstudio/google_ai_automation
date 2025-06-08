@@ -5,6 +5,9 @@
 이 프로그램은 **텔레그램에서 PDF 파일을 전송하면, PDF 텍스트를 추출하고 GPT로 요약한 후 구글드라이브에 저장하고 요약 문서 링크와 원본 PDF 링크를 자동 응답하는 에이전트입니다.
 특정 문서 요약, 보고서 전달, 자료 검토 등에 활용할 수 있습니다.
 
+### 데모
+
+
 ---
 
 ## 실행 방법
@@ -31,53 +34,73 @@ function doPost(e) {
   const message = contents.message;
 
   if (!message || !message.document) {
-    sendMessage(message.chat.id, 'PDF 파일을 업로드해주세요.');
+    sendMessage(message.chat.id, '📎 PDF 파일을 업로드해주세요.');
     return;
   }
 
   const fileId = message.document.file_id;
   const chatId = message.chat.id;
 
-  const filePath = getTelegramFilePath(fileId);
-  if (!filePath) return;
+  sendMessage(chatId, '✅ PDF 파일 수신됨. 파일 정보 확인 중...');
 
-  const pdfBlob = downloadTelegramFile(filePath, message.document.file_name);
+  const filePath = getTelegramFilePath(fileId, chatId);
+  if (!filePath) {
+    sendMessage(chatId, '❌ 파일 경로를 가져오는 데 실패했습니다.');
+    return;
+  }
+
+  sendMessage(chatId, '📥 파일 다운로드 중...');
+
+  const pdfBlob = downloadTelegramFile(filePath, message.document.file_name, chatId);
   if (!pdfBlob) return;
 
-  const text = extractTextFromPDF(pdfBlob);
+  sendMessage(chatId, '📝 PDF에서 텍스트 추출 중...');
+
+  const text = extractTextFromPDF(pdfBlob, chatId);
   if (!text || text.startsWith('오류')) return;
 
-  const summary = summarizeText(text);
+  sendMessage(chatId, '🤖 GPT를 사용하여 요약 중...');
+
+  const summary = summarizeText(text, chatId);
   if (!summary || summary.startsWith('요약하는 중 오류')) return;
 
-  const docUrl = saveSummaryToGoogleDoc(summary);
+  sendMessage(chatId, '📄 요약 내용을 Google 문서에 저장 중...');
+
+  const docUrl = saveSummaryToGoogleDoc(summary, chatId);
+
+  sendMessage(chatId, '🔗 링크 생성 중...');
+
   const pdfUrl = getShareableLink(pdfBlob);
 
-  sendMessage(chatId, `요약이 완료되었습니다.\n\n📄 요약 문서: ${docUrl}\n📎 원본 PDF: ${pdfUrl}`);
+  sendMessage(chatId, `✅ 완료되었습니다!\n\n📄 요약 문서 링크: ${docUrl}\n📎 원본 PDF 링크: ${pdfUrl}`);
 }
 
-function getTelegramFilePath(fileId) {
+// === 핵심 함수들 ===
+
+function getTelegramFilePath(fileId, chatId) {
   try {
     const url = `${TELEGRAM_API_URL}/getFile?file_id=${fileId}`;
     const response = UrlFetchApp.fetch(url);
     const json = JSON.parse(response.getContentText());
     return json.result?.file_path || null;
   } catch (error) {
+    sendMessage(chatId, '⚠️ 파일 경로 오류: ' + error.message);
     return null;
   }
 }
 
-function downloadTelegramFile(filePath, fileName) {
+function downloadTelegramFile(filePath, fileName, chatId) {
   try {
     const fileUrl = `https://api.telegram.org/file/bot${TELEGRAM_TOKEN}/${filePath}`;
     const response = UrlFetchApp.fetch(fileUrl);
     return response.getBlob().setName(fileName);
   } catch (error) {
+    sendMessage(chatId, '⚠️ 파일 다운로드 오류: ' + error.message);
     return null;
   }
 }
 
-function extractTextFromPDF(pdfBlob) {
+function extractTextFromPDF(pdfBlob, chatId) {
   try {
     const resource = {
       name: pdfBlob.getName().replace(/\.pdf$/i, ''),
@@ -92,19 +115,22 @@ function extractTextFromPDF(pdfBlob) {
     const converted = Drive.Files.create(resource, pdfBlob, options);
     const doc = DocumentApp.openById(converted.id);
     const text = doc.getBody().getText();
+
     DriveApp.getFileById(converted.id).setTrashed(true);
-    return text || 'PDF에서 텍스트를 찾을 수 없습니다.';
+
+    return text || '⚠️ PDF에서 텍스트를 찾을 수 없습니다.';
   } catch (error) {
+    sendMessage(chatId, '⚠️ 텍스트 추출 중 오류 발생: ' + error.message);
     return '오류로 인해 텍스트를 추출할 수 없습니다.';
   }
 }
 
-function summarizeText(text) {
+function summarizeText(text, chatId) {
   try {
     const prompt = `다음 내용을 한국어로 요약해 주세요:\n\n${text}`;
     const url = 'https://api.openai.com/v1/chat/completions';
     const payload = {
-      model: 'gpt-4',
+      model: 'gpt-4o',
       messages: [
         { role: 'system', content: '당신은 유능한 요약가입니다.' },
         { role: 'user', content: prompt }
@@ -125,11 +151,12 @@ function summarizeText(text) {
     const data = JSON.parse(response.getContentText());
     return data.choices[0].message.content.trim();
   } catch (error) {
+    sendMessage(chatId, '⚠️ 요약 중 오류 발생: ' + error.message);
     return '요약하는 중 오류가 발생했습니다.';
   }
 }
 
-function saveSummaryToGoogleDoc(summary) {
+function saveSummaryToGoogleDoc(summary, chatId) {
   try {
     const doc = DocumentApp.create('PDF 요약 결과');
     doc.getBody().setText(summary);
@@ -138,7 +165,8 @@ function saveSummaryToGoogleDoc(summary) {
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
     return doc.getUrl();
   } catch (error) {
-    return '요약 문서를 저장하는 중 오류가 발생했습니다.';
+    sendMessage(chatId, '⚠️ Google 문서 저장 오류: ' + error.message);
+    return 'Google 문서를 저장하는 중 오류가 발생했습니다.';
   }
 }
 
@@ -148,7 +176,7 @@ function getShareableLink(fileBlob) {
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
     return file.getUrl();
   } catch (error) {
-    return 'PDF 공유 링크 생성 중 오류가 발생했습니다.';
+    return '📎 PDF 공유 링크 생성 중 오류가 발생했습니다.';
   }
 }
 
