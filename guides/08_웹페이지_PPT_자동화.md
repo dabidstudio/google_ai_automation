@@ -190,16 +190,15 @@ https://api.telegram.org/bot123456789:ABCxyz/setWebhook?url=https://script.googl
 
 ## 기타
 
-* GPT 입력은 최대 4000자까지 제한되어 있으므로 웹사이트 내용이 많을 경우 일부만 요약됩니다.
 * 슬라이드 템플릿에 맞춰 다양한 테마를 직접 구성한 후 `TEMPLATE_SLIDE_ID`로 복사해 사용하면 디자인 품질을 높일 수 있습니다.
 * 웹페이지의 구조가 복잡하거나 자바스크립트 기반일 경우, 본문 텍스트 파싱이 제대로 되지 않을 수 있습니다.
-  이 경우 다음 형식으로 Jina AI Reader 프록시를 사용하면 대부분 해결됩니다:
+  이 경우 다음 형식으로 Jina AI Reader 서비스를 사용하면 대부분 해결됩니다:
 
 ```javascript
 const modifiedLink = 'https://r.jina.ai/' + originalLink;
 ```
 
-해당 프록시를 통해 텍스트만 추출하여 처리 가능: [https://jina.ai/reader/](https://jina.ai/reader/)
+해당 서비스를 통해 텍스트만 추출하여 처리 가능: [https://jina.ai/reader/](https://jina.ai/reader/)
 
 * 앱을 새로 배포하거나 템플릿을 바꾼 경우, 웹훅도 다시 설정해야 합니다.
 
