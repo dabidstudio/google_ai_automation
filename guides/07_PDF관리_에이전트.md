@@ -6,6 +6,7 @@
 특정 문서 요약, 보고서 전달, 자료 검토 등에 활용할 수 있습니다.
 
 ### 데모
+![explorer_B291IlbJj5](https://github.com/user-attachments/assets/bc968c56-4660-4281-b008-2f4fd5e015c8)
 
 
 ---
