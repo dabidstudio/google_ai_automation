@@ -197,6 +197,10 @@ function sendMessage(chatId, text) {
 }
 ```
 
+3. Drive API 활성화
+   * 이 프로젝트는 고급 Drive API (Drive.Files.create) 를 사용하므로 추가 설정이 필수입니다.
+   * 상단 메뉴 → "서비스" 아이콘 클릭 → Drive API 항목을 찾아 "추가" 버튼 클릭
+
 ---
 
 ### 3. 앱 배포 (웹훅용)
